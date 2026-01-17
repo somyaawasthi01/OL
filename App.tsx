@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IdeaList } from './components/temp';
+import { IdeaList } from './components/Idealist.tsx';
 import { LoveLetter } from './components/LoveLetter';
 import { QuickTexts } from './components/QuickTexts';
 import { Counselling } from './components/Counselling';
