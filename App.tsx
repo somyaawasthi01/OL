@@ -1,319 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { IdeaList } from './components/Idealist.tsx';
-import { LoveLetter } from './components/LoveLetter';
-import { QuickTexts } from './components/QuickTexts';
-import { Counselling } from './components/Counselling';
-import { ImageEditor } from './components/ImageEditor';
-import { OldSchoolLove } from './components/OldSchoolLove';
-import { Heart, Info, X, Zap, Globe, Sparkles, Palette } from 'lucide-react';
-import { t, Language } from './translations';
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState, useRef, useEffect } from 'react';
+import { Layout } from './components/Layout';
+import { InfoSection } from './components/InfoSection';
+import { AIConsultant } from './components/AIConsultant';
+import { TissueLayerView } from './components/TissueLayerView';
+import { CuratorSection } from './components/CuratorSection';
+import { BarrierSection } from './components/BarrierSection';
+import { HairCareSection } from './components/HairCareSection';
+import { IngredientLibrary } from './components/IngredientLibrary';
+import { BioSlider } from './components/BioSlider';
+import { SKIN_CARE_ROUTINE, HAIR_CARE_ROUTINE, MORNING_HACKS } from './constants';
+import { ArrowRight, Sun, TrendingUp, CheckCircle, Heart, Droplets, Activity, Bookmark, Clock, Target, X, Zap } from 'lucide-react';
 
-type Tab = 'home' | 'ideas' | 'activity' | 'wellness';
+const App = () => {
+  const [activeTab, setActiveTab] = useState('intro');
+  const [mode] = useState('public');
+  const [profile, setProfile] = useState(null);
+  const [journeyProgress, setJourneyProgress] = useState(30);
+  const [savedItems, setSavedItems] = useState([]);
+  const scrollContainerRef = useRef(null);
 
-interface Particle {
-  id: number;
-  x: number;
-  y: number;
-  emoji: string;
-  style: React.CSSProperties;
-}
+  useEffect(() => {
+    const saved = localStorage.getItem('layers_saved_items');
+    if (saved) setSavedItems(JSON.parse(saved));
+    const savedProfile = localStorage.getItem('layers_user_profile');
+    if (savedProfile) setProfile(JSON.parse(savedProfile));
+  }, []);
 
-// Creative Colorful Icons
-const CreativeHome = ({ size = 28, className = "" }: { size?: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-    <path d="M3 10L12 2L21 10V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V10Z" fill="#FFE4E6" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M9 22V12H15V22" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M12 6V8" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round"/> 
-    <circle cx="12" cy="15" r="2" fill="#F43F5E" opacity="0.4" />
-  </svg>
-);
+  const tabs = ['intro', 'curate', 'skin', 'hair', 'potions', 'layers', 'consult', 'saved'];
 
-const CreativeIdeas = ({ size = 28, className = "" }: { size?: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-    <path d="M9 18H15" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M10 22H14" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M12 2C7.58172 2 4 5.58172 4 10C4 12.8956 5.5 15.3906 7.75 16.75C8.35 17.1 9 17.5 9 18H15C15 17.5 15.65 17.1 16.25 16.75C18.5 15.3906 20 12.8956 20 10C20 5.58172 16.4183 2 12 2Z" fill="#FEF3C7" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M11 9L13 9" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M11 12L13 12" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
-    <circle cx="16" cy="6" r="1.5" fill="#F59E0B" />
-  </svg>
-);
-
-const CreativeActivity = ({ size = 28, className = "" }: { size?: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 21.5C16.6944 21.5 20.5 17.6944 20.5 13C20.5 8.30558 16.6944 4.5 12 4.5C7.30558 4.5 3.5 8.30558 3.5 13C3.5 17.6944 7.30558 21.5 12 21.5Z" fill="#F3E8FF" stroke="#9333EA" strokeWidth="2"/>
-    <circle cx="8" cy="11" r="2" fill="#C084FC" />
-    <circle cx="16" cy="11" r="2" fill="#E879F9" />
-    <circle cx="12" cy="17" r="2" fill="#818CF8" />
-    <circle cx="12" cy="7" r="1" fill="#9333EA" />
-    <path d="M18 19L21 22" stroke="#9333EA" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
-
-const CreativeWellness = ({ size = 28, className = "" }: { size?: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#FFE4E6" stroke="#F43F5E" strokeWidth="2"/>
-    <path d="M12 6C12 6 12.5 8 15 8" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M9 11H9.01" stroke="#F43F5E" strokeWidth="3" strokeLinecap="round"/>
-    <path d="M15 11H15.01" stroke="#F43F5E" strokeWidth="3" strokeLinecap="round"/>
-  </svg>
-);
-
-const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>('home');
-  const [showGuide, setShowGuide] = useState(false);
-  const [lang, setLang] = useState<Language>('en');
-  const [particles, setParticles] = useState<Particle[]>([]);
-
-  const txt = t[lang];
-
-  const toggleLang = () => {
-    setLang(prev => prev === 'en' ? 'hi' : 'en');
-  };
-
-  const spawnParticles = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    const emojis = ['❤️', '💖', '✨', '⭐', '💘', '💜', '🪄', '🎨'];
-    const newParticles: Particle[] = [];
-
-    for (let i = 0; i < 12; i++) {
-        const angle = Math.random() * 360;
-        const velocity = Math.random() * 100 + 50; // pixels distance
-        const tx = Math.cos(angle * Math.PI / 180) * velocity;
-        const ty = Math.sin(angle * Math.PI / 180) * velocity - 100; // biased upwards
-        const rotation = Math.random() * 360;
-        
-        newParticles.push({
-            id: Date.now() + i,
-            x: centerX,
-            y: centerY,
-            emoji: emojis[Math.floor(Math.random() * emojis.length)],
-            style: {
-                '--tx': `${tx}px`,
-                '--ty': `${ty}px`,
-                '--tr': `${rotation}deg`,
-            } as React.CSSProperties
-        });
-    }
-
-    setParticles(prev => [...prev, ...newParticles]);
-
-    // Cleanup after animation
-    setTimeout(() => {
-        setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
-    }, 1000);
-  };
-
-  const handleTabChange = (tab: Tab, e: React.MouseEvent<HTMLButtonElement>) => {
-      setActiveTab(tab);
-      spawnParticles(e);
-  };
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'home':
-        return (
-          <div className="space-y-8 animate-fade-in pb-20">
-             {/* Hero Card */}
-             <div className="glass-card rounded-3xl p-8 text-center relative overflow-hidden border-0 bg-gradient-to-br from-rose-500 via-pink-500 to-rose-600 shadow-xl shadow-rose-200/50 group">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl transform translate-x-10 -translate-y-10 group-hover:scale-110 transition-transform duration-700"></div>
-                <div className="absolute bottom-0 left-0 w-40 h-40 bg-yellow-300 opacity-20 rounded-full blur-3xl transform -translate-x-10 translate-y-10 group-hover:scale-110 transition-transform duration-700"></div>
-                
-                <div className="relative z-10 text-white">
-                  <div className="flex justify-center mb-6">
-                    <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm floating-icon">
-                        <Heart className="fill-white" size={48} />
-                    </div>
-                  </div>
-                  <h1 className={`text-5xl font-bold mb-3 tracking-tight ${lang === 'hi' ? 'font-hindi' : 'font-serif'}`}>
-                    {lang === 'hi' ? 'ओवररेटेड लव' : 'Overrated Love'}
-                  </h1>
-                  <p className={`italic opacity-90 text-2xl mb-6 ${lang === 'hi' ? 'font-hindi' : ''}`}>
-                    {lang === 'hi' ? '"उलझा हुआ, महंगा और पूरी तरह से अतार्किक।"' : '"Messy, expensive, and totally irrational."'}
-                  </p>
-                  
-                  <button 
-                    onClick={() => setShowGuide(true)}
-                    className="bg-white text-rose-600 px-6 py-2.5 rounded-full font-bold text-sm shadow-lg hover:bg-rose-50 hover:scale-105 transition-all flex items-center gap-2 mx-auto"
-                  >
-                    <Info size={16} /> {txt.guideBtn}
-                  </button>
-                </div>
-             </div>
-             
-             {/* Instruction Banner */}
-             <div className="flex justify-center mt-6 mb-4">
-                <div className={`px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 shadow-lg shadow-rose-200 border-2 border-white flex items-center gap-2 text-white text-sm font-extrabold animate-bounce cursor-default tracking-wide transform hover:scale-105 transition-transform duration-300 ${lang === 'hi' ? 'font-hindi' : 'font-serif'}`}>
-                    <Sparkles size={16} className="text-yellow-200 fill-yellow-200" />
-                    {txt.clickGenerate}
-                </div>
-             </div>
-
-             <QuickTexts lang={lang} />
-             
-             <div className="pt-2">
-                <OldSchoolLove lang={lang} />
-             </div>
-          </div>
-        );
-      case 'ideas':
-        return (
-          <div className="animate-fade-in pb-24">
-             <IdeaList lang={lang} />
-          </div>
-        );
-      case 'activity':
-        return (
-          <div className="animate-fade-in space-y-8 pb-24">
-             <div className="text-center mb-2 px-4">
-                <span className="p-3 bg-purple-100 text-purple-600 rounded-2xl mb-4 inline-block shadow-sm">
-                    <Palette size={32} />
-                </span>
-                <h2 className={`text-3xl font-bold text-gray-800 mb-2 ${lang === 'hi' ? 'font-hindi' : 'font-activity'}`}>
-                    {txt.activityZone}
-                </h2>
-                <p className={`text-gray-500 ${lang === 'hi' ? 'font-hindi' : ''}`}>{txt.activitySub}</p>
-             </div>
-             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                <LoveLetter lang={lang} />
-                <ImageEditor lang={lang} />
-             </div>
-          </div>
-        );
-      case 'wellness':
-        return (
-          <div className="animate-fade-in pb-24">
-             <Counselling lang={lang} />
-          </div>
-        );
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    const index = tabs.indexOf(tabId);
+    if (scrollContainerRef.current) {
+      const containerWidth = scrollContainerRef.current.clientWidth;
+      scrollContainerRef.current.scrollTo({ left: index * containerWidth, behavior: 'smooth' });
     }
   };
 
-  return (
-    <div className={`h-screen w-screen flex flex-col bg-rose-50 overflow-hidden relative ${lang === 'hi' ? 'font-hindi' : ''}`}>
-      
-      {/* Particle Animation Styles */}
-      <style>{`
-        @keyframes particle-pop {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            50% { opacity: 1; }
-            100% { transform: translate(-50%, -50%) translate3d(var(--tx), var(--ty), 100px) rotate(var(--tr)) scale(0); opacity: 0; }
-        }
-        .particle-3d {
-            position: fixed;
-            pointer-events: none;
-            z-index: 100;
-            animation: particle-pop 1s cubic-bezier(0, .9, .57, 1) forwards;
-            font-size: 24px;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-        }
-      `}</style>
+  const handleSave = (item) => {
+    setSavedItems(prev => {
+      const exists = prev.find(i => i.id === item.id);
+      const next = exists ? prev.filter(i => i.id !== item.id) : [item, ...prev];
+      localStorage.setItem('layers_saved_items', JSON.stringify(next));
+      return next;
+    });
+  };
 
-      {/* Particles Overlay */}
-      {particles.map(p => (
-        <div 
-            key={p.id} 
-            className="particle-3d" 
-            style={{ left: p.x, top: p.y, ...p.style }}
-        >
-            {p.emoji}
-        </div>
-      ))}
+  const handleProfileUpdate = (newProfile) => {
+    setProfile(newProfile);
+    localStorage.setItem('layers_user_profile', JSON.stringify(newProfile));
+  };
 
-      {/* Background Ambience */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-rose-300/30 rounded-full blur-[100px] mix-blend-multiply opacity-60 animate-pulse"></div>
-          <div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-purple-300/30 rounded-full blur-[100px] mix-blend-multiply opacity-60 animate-pulse delay-2"></div>
-      </div>
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const scrollLeft = scrollContainerRef.current.scrollLeft;
+    const containerWidth = scrollContainerRef.current.clientWidth;
+    const index = Math.round(scrollLeft / containerWidth);
+    if (tabs[index] && tabs[index] !== activeTab) {
+      setActiveTab(tabs[index]);
+    }
+  };
 
-      {/* Language Toggle */}
-      <div className="absolute top-6 right-6 z-50">
-          <button 
-            onClick={toggleLang}
-            className="bg-white/50 backdrop-blur-md border border-white/50 p-2 rounded-full shadow-md text-rose-600 hover:bg-white transition-all flex items-center gap-2 px-4 font-bold text-xs"
-          >
-            <Globe size={16} /> {lang === 'en' ? 'हिन्दी' : 'English'}
-          </button>
-      </div>
-
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto z-10 custom-scrollbar scroll-smooth">
-        <div className="max-w-4xl mx-auto px-4 pt-6 pb-32"> 
-           {renderContent()}
-        </div>
-      </main>
-
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 w-full z-40 bg-white/90 backdrop-blur-xl border-t border-rose-100 pb-safe pt-2 shadow-[0_-5px_20px_rgba(0,0,0,0.03)] perspective-1000">
-        <div className="max-w-md mx-auto flex justify-around items-center px-2 pb-2">
-          
-          <button 
-            onClick={(e) => handleTabChange('home', e)}
-            className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all duration-300 ${activeTab === 'home' ? 'text-rose-600 scale-105' : 'text-gray-400 hover:text-rose-400'}`}
-          >
-            <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'home' ? 'bg-rose-100 shadow-sm' : 'bg-transparent'}`}>
-              <CreativeHome size={28} className={activeTab === 'home' ? 'fill-rose-100' : ''} />
-            </div>
-            <span className={`text-[10px] font-bold tracking-wide ${lang === 'hi' ? 'font-hindi' : ''}`}>{txt.home}</span>
-          </button>
-
-          <button 
-            onClick={(e) => handleTabChange('ideas', e)}
-            className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all duration-300 ${activeTab === 'ideas' ? 'text-rose-600 scale-105' : 'text-gray-400 hover:text-rose-400'}`}
-          >
-            <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'ideas' ? 'bg-rose-100 shadow-sm' : 'bg-transparent'}`}>
-              <CreativeIdeas size={28} className={activeTab === 'ideas' ? 'fill-rose-100' : ''} />
-            </div>
-            <span className={`text-[10px] font-bold tracking-wide ${lang === 'hi' ? 'font-hindi' : ''}`}>{txt.ideas}</span>
-          </button>
-
-          <button 
-            onClick={(e) => handleTabChange('activity', e)}
-            className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all duration-300 ${activeTab === 'activity' ? 'text-rose-600 scale-105' : 'text-gray-400 hover:text-rose-400'}`}
-          >
-            <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'activity' ? 'bg-rose-100 shadow-sm' : 'bg-transparent'}`}>
-              <CreativeActivity size={28} className={activeTab === 'activity' ? 'fill-rose-100' : ''} />
-            </div>
-            <span className={`text-[10px] font-bold tracking-wide ${lang === 'hi' ? 'font-hindi' : ''}`}>{txt.activity}</span>
-          </button>
-
-          <button 
-            onClick={(e) => handleTabChange('wellness', e)}
-            className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all duration-300 ${activeTab === 'wellness' ? 'text-rose-600 scale-105' : 'text-gray-400 hover:text-rose-400'}`}
-          >
-            <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'wellness' ? 'bg-rose-100 shadow-sm' : 'bg-transparent'}`}>
-              <CreativeWellness size={28} className={activeTab === 'wellness' ? 'fill-rose-100' : ''} />
-            </div>
-            <span className={`text-[10px] font-bold tracking-wide ${lang === 'hi' ? 'font-hindi' : ''}`}>{txt.wellness}</span>
-          </button>
-
-        </div>
-      </nav>
-
-      {showGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-rose-900/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl relative overflow-hidden border-4 border-rose-100 transform transition-all scale-100">
-                <button onClick={() => setShowGuide(false)} className="absolute top-4 right-4 text-gray-400 hover:text-rose-500 transition-colors p-2 bg-gray-50 rounded-full"><X size={20} /></button>
-                <div className="text-center mb-6">
-                    <div className="bg-rose-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 floating-icon"><Zap className="text-rose-600 fill-rose-600" size={32} /></div>
-                    <h2 className={`text-2xl font-bold text-gray-800 ${lang === 'hi' ? 'font-hindi' : 'font-serif'}`}>
-                        {lang === 'hi' ? 'एक बार उपयोग का नियम' : 'The One-Time Rule'}
-                    </h2>
-                </div>
-                <div className={`space-y-6 text-gray-600 text-sm leading-relaxed ${lang === 'hi' ? 'font-hindi' : ''}`}>
-                    <div className="flex gap-4 items-start"><span className="bg-rose-500 text-white w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-0.5">1</span><p><strong className="text-gray-800">Spark:</strong> {lang === 'hi' ? 'आज करने के लिए केवल एक चीज खोजें।' : 'Find exactly one thing to do today.'}</p></div>
-                    <div className="flex gap-4 items-start"><span className="bg-rose-500 text-white w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-0.5">2</span><p><strong className="text-gray-800">Create:</strong> {lang === 'hi' ? 'एक प्रेम पत्र या फोटो संपादित करें।' : 'Generate a love letter or edit a photo.'}</p></div>
-                    <div className="flex gap-4 items-start bg-rose-50 p-3 rounded-xl border border-rose-100"><span className="bg-rose-500 text-white w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-0.5">3</span><p className="font-bold text-rose-900">{lang === 'hi' ? 'Disconnect: ऐप बंद करें। फोन रखें। हकीकत में प्यार करें।' : 'Disconnect to Connect: Close the app. Put phone away. Love real life.'}</p></div>
-                </div>
-                <button onClick={() => setShowGuide(false)} className="w-full mt-8 bg-gradient-to-r from-rose-500 to-pink-600 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">{lang === 'hi' ? 'मैं वादा करता हूँ' : 'I Promise to Disconnect'}</button>
-            </div>
-        </div>
-      )}
-    </div>
-  );
+  return (_jsx("div", { className: "w-full h-full flex items-center justify-center bg-white", children: _jsx(Layout, { activeTab: activeTab, setActiveTab: handleTabChange, mode: mode, onModeToggle: () => { }, children: _jsxs("div", { ref: scrollContainerRef, onScroll: handleScroll, className: "snap-container no-scrollbar scroll-smooth", children: [_jsx("section", { className: "snap-page flex flex-col justify-start no-scrollbar pb-32", children: _jsxs("div", { className: "w-full space-y-10 animate-fade-up py-8", children: [_jsxs("div", { className: "flex flex-col items-center text-center space-y-6", children: [_jsx("div", { className: "logo-rings", children: _jsx("div", { className: "w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-inner", children: _jsx(Heart, { className: "w-12 h-12 text-[#FF6B9D]", fill: "#FF6B9D" }) }) }), _jsxs("div", { className: "space-y-2", children: [_jsx("h1", { className: "text-5xl font-black tracking-tighter text-slate-900 uppercase", children: "LAYERS" }), _jsx("p", { className: "text-sm font-bold text-slate-400 uppercase tracking-[0.2em]", children: "Personal Care Intelligence" })] })] }), profile ? (_jsxs("div", { className: "space-y-8 animate-fade-up", children: [_jsxs("div", { className: "p-8 rounded-[44px] bg-slate-900 text-white space-y-8 shadow-2xl relative overflow-hidden group", children: [_jsx("div", { className: "absolute top-0 right-0 w-48 h-48 bg-[#FF6B9D]/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-[#FF6B9D]/20 transition-all duration-700" }), _jsxs("div", { className: "flex items-center justify-between relative z-10", children: [_jsxs("div", { className: "flex items-center gap-3", children: [_jsx("div", { className: "w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center", children: _jsx(Target, { className: "w-6 h-6 text-[#FF6B9D]" }) }), _jsxs("div", { children: [_jsx("span", { className: "text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block", children: "Biological Focus" }), _jsx("h3", { className: "text-xl font-black uppercase tracking-tight", children: profile.mainSkinConcern })] })] }), _jsxs("div", { className: "text-right", children: [_jsx("span", { className: "text-[10px] font-black uppercase tracking-widest text-slate-400 block", children: "Health Index" }), _jsx("span", { className: "text-2xl font-black text-[#17B8A0]", children: "8.4" })] })] }), _jsxs("div", { className: "space-y-4 relative z-10", children: [_jsx("div", { className: "flex items-end justify-between gap-1 h-20", children: [35, 42, 38, 55, 62, 58, 75].map((val, i) => (_jsx("div", { className: "flex-1 bg-white/5 rounded-t-lg relative group/bar", children: _jsx("div", { className: "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#17B8A0] to-[#17B8A0]/50 rounded-t-lg transition-all duration-1000 delay-150", style: { height: `${val}%` } }) }, i))) }), _jsxs("div", { className: "flex justify-between text-[8px] font-black text-slate-500 uppercase tracking-widest", children: [_jsx("span", { children: "Mon" }), _jsx("span", { children: "Today" })] })] }), _jsxs("div", { className: "grid grid-cols-2 gap-4 relative z-10 pt-4 border-t border-white/5", children: [_jsxs("div", { className: "space-y-1", children: [_jsx("span", { className: "text-[9px] font-black uppercase tracking-widest text-slate-500", children: "Hydration" }), _jsxs("div", { className: "flex items-center gap-2", children: [_jsx(Zap, { className: "w-3 h-3 text-[#FFB84D]" }), _jsx("span", { className: "text-sm font-black", children: "+14% Growth" })] })] }), _jsxs("div", { className: "space-y-1 border-l border-white/5 pl-4", children: [_jsx("span", { className: "text-[9px] font-black uppercase tracking-widest text-slate-500", children: "Barrier" }), _jsxs("div", { className: "flex items-center gap-2", children: [_jsx(TrendingUp, { className: "w-3 h-3 text-[#17B8A0]" }), _jsx("span", { className: "text-sm font-black text-[#17B8A0]", children: "Optimal" })] })] })] })] }), _jsxs("div", { className: "grid grid-cols-2 gap-5 px-1", children: [_jsxs("button", { onClick: () => handleTabChange('skin'), className: "p-8 rounded-[40px] bg-white border-2 border-slate-50 hover:border-[#FF6B9D]/20 transition-all flex flex-col items-center gap-4 group active:scale-95 shadow-sm", children: [_jsx("div", { className: "w-14 h-14 bg-[#FF6B9D]/10 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform", children: _jsx(Droplets, { className: "w-7 h-7 text-[#FF6B9D]" }) }), _jsx("span", { className: "text-xs font-black uppercase tracking-widest text-slate-900", children: "Skin Lab" })] }), _jsxs("button", { onClick: () => handleTabChange('hair'), className: "p-8 rounded-[40px] bg-white border-2 border-slate-50 hover:border-[#FFB84D]/20 transition-all flex flex-col items-center gap-4 group active:scale-95 shadow-sm", children: [_jsx("div", { className: "w-14 h-14 bg-[#FFB84D]/10 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform", children: _jsx(Activity, { className: "w-7 h-7 text-[#FFB84D]" }) }), _jsx("span", { className: "text-xs font-black uppercase tracking-widest text-slate-900", children: "Hair Lab" })] })] })] })) : (_jsxs("div", { className: "grid grid-cols-2 gap-5 px-1", children: [_jsxs("button", { onClick: () => handleTabChange('skin'), className: "p-8 rounded-[40px] bg-[#FF6B9D] text-white hover:opacity-90 transition-all flex flex-col items-center gap-4 border-none group active:scale-95 shadow-xl shadow-[#FF6B9D]/20", children: [_jsx("div", { className: "w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform", children: _jsx(Droplets, { className: "w-7 h-7 text-white" }) }), _jsx("span", { className: "text-xs font-black uppercase tracking-widest", children: "Skin Lab" })] }), _jsxs("button", { onClick: () => handleTabChange('hair'), className: "p-8 rounded-[40px] bg-[#FFB84D] text-white hover:opacity-90 transition-all flex flex-col items-center gap-4 border-none group active:scale-95 shadow-xl shadow-[#FFB84D]/20", children: [_jsx("div", { className: "w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform", children: _jsx(Activity, { className: "w-7 h-7 text-white" }) }), _jsx("span", { className: "text-xs font-black uppercase tracking-widest", children: "Hair Lab" })] })] })), _jsxs("div", { className: "space-y-6 pt-4", children: [_jsxs("div", { className: "flex items-center gap-3 px-2", children: [_jsx(TrendingUp, { className: "w-6 h-6 text-[#17B8A0]" }), _jsx("h3", { className: "text-xl font-black text-slate-900 uppercase tracking-tight", children: "Barrier Recovery" })] }), _jsx("div", { className: "px-1", children: _jsx(BioSlider, { progress: journeyProgress, onChange: setJourneyProgress }) })] }), _jsxs("div", { className: "pt-8 px-2 space-y-4", children: [_jsxs("button", { onClick: () => handleTabChange('curate'), className: "w-full h-20 rounded-[32px] bg-slate-900 text-white text-base font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 shadow-2xl active:scale-95 transition-all", children: [profile ? 'Refine Assessment' : 'Start Assessment', " ", _jsx(ArrowRight, { className: "w-6 h-6" })] }), savedItems.length > 0 && (_jsxs("button", { onClick: () => handleTabChange('saved'), className: "w-full h-16 rounded-[32px] border-2 border-slate-100 text-slate-900 text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 active:scale-95 transition-all", children: ["View Saved Vault ", _jsx(Bookmark, { className: "w-5 h-5 text-[#C084FC]" })] }))] })] }) }), _jsx("section", { className: "snap-page flex items-center justify-center", children: _jsx(CuratorSection, { onProfileUpdate: handleProfileUpdate, onComplete: () => handleTabChange('consult'), mode: mode }) }), _jsx("section", { className: "snap-page pb-32", children: _jsxs("div", { className: "space-y-12 py-8", children: [_jsx(BarrierSection, {}), _jsx(InfoSection, { title: "Skin Ritual", subtitle: "Daily Protocol", steps: SKIN_CARE_ROUTINE, theme: "rose" }), _jsxs("div", { className: "space-y-6", children: [_jsxs("div", { className: "flex items-center gap-3 px-1", children: [_jsx(Sun, { className: "w-6 h-6 text-[#FFB84D]" }), _jsx("h2", { className: "text-xl font-black text-slate-900 uppercase tracking-tight", children: "Morning Hacks" })] }), _jsx("div", { className: "side-scroller no-scrollbar px-1", children: MORNING_HACKS.map((h, i) => (_jsxs("div", { className: "w-64 p-7 rounded-[32px] bg-slate-50 border-none space-y-4 shadow-sm min-h-[160px] flex flex-col justify-between", children: [_jsx("h3", { className: "text-lg font-black text-slate-800 uppercase leading-tight whitespace-normal break-words", children: h.title }), _jsx("p", { className: "text-[14px] text-slate-500 font-medium leading-relaxed", children: h.desc }), _jsxs("div", { className: "flex items-center gap-2 text-[10px] font-black text-[#17B8A0] uppercase tracking-widest pt-2 mt-auto border-t border-slate-200/50 w-full whitespace-normal break-words", children: [_jsx(CheckCircle, { className: "w-4 h-4 shrink-0" }), " ", h.benefit] })] }, i))) })] })] }) }), _jsx("section", { className: "snap-page pb-32", children: _jsxs("div", { className: "space-y-12 py-8", children: [_jsx(HairCareSection, {}), _jsx(InfoSection, { title: "Hair Ritual", subtitle: "Care Plan", steps: HAIR_CARE_ROUTINE, theme: "amber" })] }) }), _jsx("section", { className: "snap-page pb-32", children: _jsxs("div", { className: "space-y-8 py-8", children: [_jsxs("header", { className: "text-center space-y-2", children: [_jsx("h1", { className: "text-4xl font-black text-slate-900 uppercase tracking-tighter", children: "The Lab" }), _jsx("p", { className: "text-xs font-bold text-slate-400 uppercase tracking-[0.3em]", children: "100% Real Bio-Ingredients" })] }), _jsx(IngredientLibrary, { onSave: handleSave, savedItems: savedItems })] }) }), _jsx("section", { className: "snap-page pb-32", children: _jsx(TissueLayerView, {}) }), _jsx("section", { className: "snap-page pb-32", children: _jsx(AIConsultant, { onSave: handleSave, savedItems: savedItems, profile: profile || {
+                            mode, skincareTime: 'Every Day', skinType: 'Normal', hairType: 'Straight',
+                            mainSkinConcern: 'Balanced', mainHairConcern: 'None', ingredientAllergies: []
+                          } }) }), _jsx("section", { className: "snap-page pb-32", children: _jsxs("div", { className: "w-full space-y-8 py-8 animate-fade-up", children: [_jsxs("header", { className: "text-center space-y-2", children: [_jsx("div", { className: "w-16 h-16 bg-[#C084FC]/10 rounded-3xl flex items-center justify-center mx-auto text-[#C084FC] mb-4 shadow-inner", children: _jsx(Bookmark, { className: "w-8 h-8" }) }), _jsx("h1", { className: "text-3xl font-black text-slate-900 uppercase tracking-tighter", children: "Saved Vault" }), _jsx("p", { className: "text-xs font-bold text-slate-400 uppercase tracking-[0.3em]", children: "Your Bookmarked Insights" })] }), _jsx("div", { className: "space-y-4", children: savedItems.length > 0 ? savedItems.map(item => (_jsxs("div", { className: "p-6 rounded-[32px] bg-slate-50 border-none flex items-center justify-between group hover:bg-[#C084FC]/5 transition-all", children: [_jsxs("div", { className: "flex items-center gap-4", children: [_jsx("div", { className: "w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#C084FC] shadow-sm", children: item.type === 'ingredient' ? _jsx(Droplets, { className: "w-5 h-5" }) : _jsx(Activity, { className: "w-5 h-5" }) }), _jsxs("div", { children: [_jsx("span", { className: "text-[8px] font-black uppercase text-slate-400 tracking-widest block mb-0.5", children: item.type }), _jsx("h4", { className: "text-sm font-black text-slate-900 uppercase line-clamp-1", children: item.title })] })] }), _jsx("button", { onClick: () => handleSave(item), className: "text-slate-200 hover:text-[#FF6B9D] transition-colors p-2", children: _jsx(X, { className: "w-5 h-5" }) })] }, item.id))) : (_jsxs("div", { className: "py-20 text-center space-y-4 opacity-30", children: [_jsx(Clock, { className: "w-12 h-12 mx-auto" }), _jsx("p", { className: "text-xs font-black uppercase tracking-widest", children: "Your vault is empty" })] })) })] }) })] }) }) }));
 };
 
 export default App;
