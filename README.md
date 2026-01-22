@@ -1,20 +1,14 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Layers — Personal Care Intelligence
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/drive/1UCVGfvSl8JD8Ry-D9QsWD0maOjoyeR3S
+Layers is a mobile-style skin + hair care companion that blends clinical guidance with a playful, interactive UI. The experience includes guided assessment, daily protocols, ingredient research, and a Gemini-backed research assistant.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Create `.env.local` and add your Gemini API key:
+   `VITE_API_KEY=your_api_key_here`
 3. Run the app:
    `npm run dev`
